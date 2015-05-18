@@ -48,6 +48,7 @@ import os.path
 import re
 import shlex
 import itertools
+import inspect
 
 
 ENVIRONMENTS = [("ENV_OUTPUT", "BEAR_OUTPUT")]
@@ -58,6 +59,7 @@ else:
     ENVIRONMENTS.extend([("ENV_PRELOAD", "DYLD_INSERT_LIBRARIES"),
                           ("ENV_FLAT", "DYLD_FORCE_FLAT_NAMESPACE")])
 
+THIS_FILE = os.path.dirname(os.path.abspath(inspect.getsourcefile(lambda _: None)))
 
 def main():
     try:
@@ -142,6 +144,7 @@ def parse_exec_trace(filename):
     GS = chr(0x1d)
     RS = chr(0x1e)
     US = chr(0x1f)
+    FS = chr(0x1c)
     with open(filename, 'r') as handler:
         content = handler.read()
         for group in filter(bool, content.split(GS)):
@@ -309,7 +312,7 @@ def create_parser():
     testing.add_argument(
         '--libear', '-l',
         dest='libear',
-        default="@DEFAULT_PRELOAD_FILE@",
+        default=THIS_FILE + "/../libear/libear.so",
         action='store',
         help="""specify libear file location.""")
 

@@ -131,7 +131,14 @@ static int call_posix_spawnp(pid_t *restrict pid, const char *restrict file,
                              char *const argv[restrict],
                              char *const envp[restrict]);
 #endif
-
+#ifdef HAVE_FOPEN
+static FILE * call_fopen(const char *filename, const char *mode);
+#endif
+#ifdef HAVE_OPEN
+#include <sys/stat.h>
+#include <fcntl.h>
+static int call_open(const char *path, int oflag, mode_t mode);
+#endif
 
 /* Initialization method to Captures the relevant environment variables.
  */
@@ -268,6 +275,27 @@ int posix_spawnp(pid_t *restrict pid, const char *restrict file,
 }
 #endif
 
+#ifdef HAVE_FOPEN
+FILE * fopen(const char *filename, const char *mode){
+    return call_fopen(filename, mode);
+}
+#endif
+
+#ifdef HAVE_OPEN
+int open(const char *path, int oflag, ...){
+    va_list args;
+    mode_t mode = 0;
+    va_start(args, oflag);
+    if(oflag & O_CREAT){
+        mode = va_arg(args, int);
+    }
+
+    va_end(args);
+
+    return call_open(path, oflag, mode);
+}
+#endif
+
 /* These are the methods which forward the call to the standard implementation.
  */
 
@@ -376,9 +404,35 @@ static int call_posix_spawnp(pid_t *restrict pid, const char *restrict file,
 }
 #endif
 
+#ifdef HAVE_FOPEN
+static FILE * call_fopen(const char *filename, const char *mode){
+    typedef FILE * (*func)(const char *filename, const char *mode);
+    DLSYM(func, fp, "fopen");
+
+    FILE * result = (*fp)(filename, mode);
+    return result;
+}
+#endif
+
+#ifdef HAVE_OPEN
+static int call_open(const char *path, int oflag, mode_t mode){
+    typedef int (*func)(const char *path, int oflag, mode_t mode);
+    DLSYM(func, fp, "open");
+
+    int result = (*fp)(path, oflag, mode);
+    if(result != -1){
+        printf("--> OK < %s\n", path);
+    }
+    return result;
+}
+#endif
+
 /* this method is to write log about the process creation. */
 
+
+
 static void bear_report_call(char const *fun, char const *const argv[]) {
+    static int const FS = 0x1c;
     static int const GS = 0x1d;
     static int const RS = 0x1e;
     static int const US = 0x1f;
