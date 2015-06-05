@@ -421,7 +421,7 @@ static int call_open(const char *path, int oflag, mode_t mode){
 
     int result = (*fp)(path, oflag, mode);
     if(result != -1){
-        printf("--> OK < %s\n", path);
+        //printf("--> OK < %s\n", path);
     }
     return result;
 }

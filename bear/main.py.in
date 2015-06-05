@@ -312,7 +312,7 @@ def create_parser():
     testing.add_argument(
         '--libear', '-l',
         dest='libear',
-        default=THIS_FILE + "/../libear/libear.so",
+        default=THIS_FILE + "/../libear/libear_${LIB}.so",
         action='store',
         help="""specify libear file location.""")
 
